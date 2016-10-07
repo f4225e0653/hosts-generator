@@ -10,10 +10,8 @@ then
 	exit 1
 fi
 
-CONFIGDIR="/etc/hosts.d" # Where are sources.list and config file, etc stored
-CONFIGSRC="hosts-gen.conf" # config directives
-
-source "${CONFIGDIR}/${CONFIGSRC}" # source configuration files
+CONFIGSRC="/etc/hosts.d/hosts-gen.conf" # location of config directives
+source "${CONFIGSRC}" # source configuration file
 
 cd $(mktemp -d)
 echo "Changing working directory to temporary directory ${PWD}."
