@@ -1,14 +1,14 @@
 #!/usr/bin/bash
 
-function DownloadSource {
-    wget $1 -nv -O $(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1) # save to random filenames to limit chances of a name collision
-    }
-    
 if [[ $(whoami) != "root" ]]
 then
 	echo "must be run as root ie with sudo!"
 	exit 1
 fi
+
+function DownloadSource {
+    wget $1 -nv -O $(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1) # save to random filenames to limit chances of a name collision
+    }
 
 CONFIGSRC="/etc/hosts.d/hosts-gen.conf" # location of config directives
 source "${CONFIGSRC}" # source configuration file
@@ -41,4 +41,5 @@ cp -v "${WORKDIR}/${NEWHOSTS}" "${INSTALL_LOCATION}" # install new hosts file in
 echo
 echo "cleaning up the mess..."
 rm -vr ""${WORKDIR}"" # remove working directory
+echo
 echo "Done."
