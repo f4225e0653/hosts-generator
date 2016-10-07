@@ -1,7 +1,6 @@
 #!/usr/bin/bash
 
 function DownloadSource {
-    echo "Downloading $1..."
     wget $1 -nv -O $(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1) # save to random filenames to limit chances of a name collision
     }
     
