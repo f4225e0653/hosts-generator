@@ -1,0 +1,47 @@
+#!/usr/bin/bash
+
+function DownloadSource {
+    echo "Downloading $1..."
+    wget $1 -nv -O $(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1) # save to random filenames to limit chances of a name collision
+    }
+    
+if [[ $(whoami) != "root" ]]
+then
+	echo "must be run as root ie with sudo!"
+	exit 1
+fi
+
+CONFIGDIR="/etc/hosts.d" # Where are sources.list and config file, etc stored
+CONFIGSRC="hosts-gen.conf" # config directives
+
+source "${CONFIGDIR}/${CONFIGSRC}" # source configuration files
+
+cd $(mktemp -d)
+echo "Changing working directory to temporary directory ${PWD}."
+WORKDIR="${PWD}"
+
+echo "Downloading source files..."
+while read URL
+do
+    DownloadSource "${URL}"
+done < ${CONFIGDIR}/sources.list
+
+echo
+echo "Concatenating files..."
+echo "127.0.0.1       localhost.localdomain   localhost
+::1             localhost.localdomain   localhost" > "${CONFIGDIR}/${NEWHOSTS}"
+sed -e '/^\#/d' -e 's/\#.*$//' -e '/^$/d' -e 's/127\.0\.0\.1/0\.0\.0\.0/' -e 's/[ \t]*$//g' * | sort | uniq >> "${WORKDIR}/${NEWHOSTS}"
+# sed command to 
+#  1. delete lines that start with #
+#  2. delete all inline comments
+#  3. delete all blank lines
+#  4. convert all instances of 127.0.0.1 to 0.0.0.0
+#  5. strip all trailing whitespace from each line
+# then sort, then uniq into new file
+echo
+echo "installing new hosts file to ${INSTALL_LOCATION}..."
+cp -v "${WORKDIR}/${NEWHOSTS}" "${INSTALL_LOCATION}" # install new hosts file into new home
+echo
+echo "cleaning up the mess..."
+rm -vr ""${WORKDIR}"" # remove working directory
+echo "Done."
