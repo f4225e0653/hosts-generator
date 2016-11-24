@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 if [[ $(whoami) != "root" ]]
 then
@@ -6,40 +6,35 @@ then
 	exit 1
 fi
 
-function DownloadSource {
-    wget $1 -nv -O $(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1) # save to random filenames to limit chances of a name collision
-    }
-
 CONFIGSRC="/etc/hosts.d/hosts-gen.conf" # location of config directives
-source "${CONFIGSRC}" # source configuration file
-
-cd $(mktemp -d)
-echo "Changing working directory to temporary directory ${PWD}."
-WORKDIR="${PWD}"
+source "${CONFIGSRC}" # source the configuration file
+WORKDIR="$(mktemp -d)" # temporary working directory
+echo "Created temporary working directory ${WORKDIR}."
 
 echo "Downloading source files..."
+
 while read URL
 do
-    DownloadSource "${URL}"
+	curl -s ${URL} -o ${WORKDIR}/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1) &
 done < ${CONFIGDIR}/sources.list
+wait
 
-echo
-echo "Concatenating files..."
+echo "Processing input files..."
+touch "${NEWHOSTS}" # just make sure it exists first
 echo "127.0.0.1       localhost.localdomain   localhost
-::1             localhost.localdomain   localhost" > "${CONFIGDIR}/${NEWHOSTS}"
-sed -e '/^\#/d' -e 's/\#.*$//' -e '/^$/d' -e 's/127\.0\.0\.1/0\.0\.0\.0/' -e 's/[ \t]*$//g' * | sort | uniq >> "${WORKDIR}/${NEWHOSTS}"
-# sed command to 
-#  1. delete lines that start with #
-#  2. delete all inline comments
-#  3. delete all blank lines
-#  4. convert all instances of 127.0.0.1 to 0.0.0.0
-#  5. strip all trailing whitespace from each line
-# then sort, then uniq into new file
-echo
-echo "installing new hosts file to ${INSTALL_LOCATION}..."
-cp -v "${WORKDIR}/${NEWHOSTS}" "${INSTALL_LOCATION}" # install new hosts file into new home
-echo
-echo "cleaning up the mess..."
-rm -vr ""${WORKDIR}"" # remove working directory
+::1             localhost.localdomain   localhost" > "${NEWHOSTS}"
+sed -e '/^\#/d' -e 's/\#.*$//' -e '/^$/d' -e 's/127\.0\.0\.1/0\.0\.0\.0/' -e 's/[[:space:]]\+/ /g' -e 's/[[:space:]]*$//g' ${WORKDIR}/* | sort | uniq >> "${NEWHOSTS}"
+
+echo "
+Backing up old hosts file..."
+bzip2 -fvz /etc/hosts
+
+echo "installing new hosts file..."
+cp -v "${NEWHOSTS}" "${INSTALL_LOCATION}"
+
+echo "
+cleaning up the mess..."
+rm -vr ""${WORKDIR}""
+rm -v "${NEWHOSTS}"
 echo
 echo "Done."
