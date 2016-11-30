@@ -16,25 +16,25 @@ echo "Downloading source files..."
 while read URL
 do
 	curl -s ${URL} -o ${WORKDIR}/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1) &
-done < ${CONFIGDIR}/sources.list
+done < ${SOURCESLIST}
 wait
 
 echo "Processing input files..."
 touch "${NEWHOSTS}" # just make sure it exists first
-echo "127.0.0.1       localhost.localdomain   localhost
-::1             localhost.localdomain   localhost" > "${NEWHOSTS}"
+echo "0.0.0.0 $(hostname).local $(hostname)" > "${NEWHOSTS}"
+echo "127.0.0.1 $(hostname).local $(hostname)" > "${NEWHOSTS}"
+::1 $(hostname).local $(hostname)" >> "${NEWHOSTS}"
+cat "${LOCALLIST}" >> "${NEWHOSTS}"
 sed -e '/^\#/d' -e 's/\#.*$//' -e '/^$/d' -e 's/127\.0\.0\.1/0\.0\.0\.0/' -e 's/[[:space:]]\+/ /g' -e 's/[[:space:]]*$//g' ${WORKDIR}/* | sort | uniq >> "${NEWHOSTS}"
 
-echo "
-Backing up old hosts file..."
-bzip2 -fvz /etc/hosts
+echo "Backing up old hosts file..."
+bzip2 -fvz "${INSTALL_LOCATION}"
 
 echo "installing new hosts file..."
 cp -v "${NEWHOSTS}" "${INSTALL_LOCATION}"
 
-echo "
-cleaning up the mess..."
-rm -vr ""${WORKDIR}""
+echo "cleaning up the mess..."
+rm -vr "${WORKDIR}"
 rm -v "${NEWHOSTS}"
 echo
 echo "Done."
