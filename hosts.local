@@ -1,0 +1,5 @@
+127.0.0.1 localhost.local localhost
+0.0.0.0 localhost.local localhost
+::1 loalhost.local localhost
+192.168.0.134 machina.local machina
+192.168.0.134 rpi.localdomain
