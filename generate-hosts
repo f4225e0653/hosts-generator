@@ -22,7 +22,7 @@ wait
 echo "Processing input files..."
 touch "${NEWHOSTS}" # just make sure it exists first
 echo "0.0.0.0 $(hostname).local $(hostname)" > "${NEWHOSTS}"
-echo "127.0.0.1 $(hostname).local $(hostname)" > "${NEWHOSTS}"
+echo "127.0.0.1 $(hostname).local $(hostname)" >> "${NEWHOSTS}"
 echo "::1 $(hostname).local $(hostname)" >> "${NEWHOSTS}"
 cat "${LOCALLIST}" >> "${NEWHOSTS}"
 sed -e '/^\#/d' -e 's/\#.*$//' -e '/^$/d' -e 's/127\.0\.0\.1/0\.0\.0\.0/' -e 's/[[:space:]]\+/ /g' -e 's/[[:space:]]*$//g' ${WORKDIR}/* | sort | uniq >> "${NEWHOSTS}"
